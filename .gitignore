@@ -1,0 +1,31 @@
+# Build directories
+build/
+build-test/
+build-*/
+
+# Personal directories
+personal/
+
+# CMake generated
+CMakeCache.txt
+CMakeFiles/
+cmake_install.cmake
+CTestTestfile.cmake
+_deps/
+
+# compile_commands.json symlink (keep the one in build/)
+compile_commands.json
+
+# Editor artifacts
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Binaries
+*.o
+*.a
+*.so
+*.dylib
