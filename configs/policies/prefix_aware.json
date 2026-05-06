@@ -1,0 +1,7 @@
+{
+  "eviction": "prefix_aware",
+  "admission": "always_admit",
+  "tier_placement": "gpu_first",
+  "promotion": "no_promotion",
+  "demotion": "no_demotion"
+}

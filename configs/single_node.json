@@ -1,0 +1,54 @@
+{
+  "node": {
+    "node_id": 0,
+    "name": "worker-0"
+  },
+  "cache": {
+    "payload_mode": "metadata_only",
+    "tiers": {
+      "GPU_SIM": { "capacity_blocks": 512 },
+      "HOST":    { "capacity_blocks": 8192 }
+    }
+  },
+  "context": {
+    "model_id": 1,
+    "tokenizer_id": 1,
+    "block_size": 16,
+    "dtype": "BF16",
+    "num_layers": 32,
+    "num_kv_heads": 8,
+    "head_dim": 128,
+    "rope_config_hash": 0,
+    "kv_layout_hash": 0
+  },
+  "policies": {
+    "admission":        "always_admit",
+    "eviction":         "lru",
+    "tier_placement":   "gpu_first",
+    "promotion":        "no_promotion",
+    "demotion":         "no_demotion",
+    "routing":          "random",
+    "replica_selection":"first",
+    "prefetch":         "none",
+    "latency":          "constant"
+  },
+  "latency": {
+    "model": "constant",
+    "params": {
+      "local_lookup_ns":   1000,
+      "tier_access_ns":    5000,
+      "migration_ns":      50000,
+      "network_fetch_ns":  500000
+    }
+  },
+  "workload": {
+    "kind":     "shared_system_prompt",
+    "seed":     42,
+    "requests": 1000
+  },
+  "output": {
+    "events_path":    "out/events.jsonl",
+    "decisions_path": "out/decisions.jsonl",
+    "stats_path":     "out/stats.json"
+  }
+}
