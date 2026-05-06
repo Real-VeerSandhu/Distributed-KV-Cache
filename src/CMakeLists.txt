@@ -9,10 +9,14 @@ add_library(kvcache_core STATIC
     core/local_cache.cc
     tier/tier.cc
     sim/event_sink.cc
+    sim/decision_logger.cc
     config/config.cc
     policy/policy_registry.cc
+    policy/feature_builders.cc
     policy/policies/always_admit.cc
+    policy/policies/no_eviction.cc
     policy/policies/lru_eviction.cc
+    policy/policies/prefix_aware_eviction.cc
     policy/policies/gpu_first_placement.cc
     policy/policies/no_promotion.cc
     policy/policies/no_demotion.cc
@@ -22,6 +26,9 @@ add_library(kvcache_core STATIC
     policy/policies/constant_latency.cc
     prefix/prefix_index.cc
     prefix/prefix_lookup_engine.cc
+    controller/safe_candidate_finder.cc
+    controller/eviction_controller.cc
+    controller/admission_controller.cc
 )
 
 target_include_directories(kvcache_core

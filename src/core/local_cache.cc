@@ -1,14 +1,41 @@
 #include "core/local_cache.h"
 
-#include <vector>
+#include "policy/policies/always_admit.h"
+#include "policy/policies/no_eviction.h"
 
 namespace kvcache {
 
 LocalCache::LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock)
-    : block_size_(block_size),
+    : owned_admission_policy_(std::make_unique<policy::AlwaysAdmitPolicy>()),
+      owned_eviction_policy_(std::make_unique<policy::NoEvictionPolicy>()),
+      owned_event_sink_(std::make_unique<sim::NullEventSink>()),
+      owned_decision_logger_(std::make_unique<sim::NullDecisionLogger>()),
+      block_size_(block_size),
+      clock_(clock),
       manager_(capacity, clock),
       prefix_index_(block_size),
-      lookup_engine_(prefix_index_, manager_) {}
+      lookup_engine_(prefix_index_, manager_),
+      candidate_finder_(manager_.store()),
+      eviction_controller_(*owned_eviction_policy_, manager_, lookup_engine_, candidate_finder_,
+                           *owned_event_sink_, *owned_decision_logger_),
+      admission_controller_(*owned_admission_policy_, eviction_controller_, manager_,
+                            lookup_engine_, block_size_, *owned_event_sink_,
+                            *owned_decision_logger_) {}
+
+LocalCache::LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock,
+                       policy::AdmissionPolicy& admission_policy,
+                       policy::EvictionPolicy& eviction_policy, sim::EventSink& events,
+                       sim::DecisionLogger& decisions)
+    : block_size_(block_size),
+      clock_(clock),
+      manager_(capacity, clock),
+      prefix_index_(block_size),
+      lookup_engine_(prefix_index_, manager_),
+      candidate_finder_(manager_.store()),
+      eviction_controller_(eviction_policy, manager_, lookup_engine_, candidate_finder_, events,
+                           decisions),
+      admission_controller_(admission_policy, eviction_controller_, manager_, lookup_engine_,
+                            block_size_, events, decisions) {}
 
 LocalLookupOutcome LocalCache::lookupPrefix(const CacheKeyContext& ctx,
                                              Span<const TokenId> tokens) {
@@ -28,52 +55,35 @@ LocalLookupOutcome LocalCache::lookupPrefix(const CacheKeyContext& ctx,
 }
 
 AdmitResult LocalCache::admitBlock(const BlockCandidate& candidate) {
-    const size_t expected =
-        (static_cast<size_t>(candidate.block_index) + 1) * static_cast<size_t>(block_size_);
-    if (candidate.tokens.size() != expected) {
-        return {AdmitResult::Status::InvalidBlock, std::nullopt};
-    }
-
     const CacheContextHash ctx_hash = computeContextHash(candidate.context);
-
-    // Check whether this block position is already present in the index
-    auto full_check = prefix_index_.lookup(
+    const policy::AdmissionContext ctx{
+        RequestId{0},
         ctx_hash,
-        Span<const TokenId>{candidate.tokens.data(), candidate.tokens.size()});
-    if (full_check.blocks.size() == static_cast<size_t>(candidate.block_index) + 1) {
-        return {AdmitResult::Status::AlreadyPresent, std::nullopt};
+        0,
+        clock_.nowNs(),
+    };
+    auto result = admission_controller_.admit(candidate, ctx);
+
+    AdmitResult out;
+    switch (result.status) {
+        case controller::AdmitResult::Status::Admitted:
+            out.status = AdmitResult::Status::Admitted;
+            break;
+        case controller::AdmitResult::Status::AlreadyPresent:
+            out.status = AdmitResult::Status::AlreadyPresent;
+            break;
+        case controller::AdmitResult::Status::CapacityExceeded:
+            out.status = AdmitResult::Status::CapacityExceeded;
+            break;
+        case controller::AdmitResult::Status::InvalidBlock:
+            out.status = AdmitResult::Status::InvalidBlock;
+            break;
+        case controller::AdmitResult::Status::Rejected:
+            out.status = AdmitResult::Status::Rejected;
+            break;
     }
-
-    // Look up existing blocks for the prefix leading to this block
-    auto existing = prefix_index_.lookup(
-        ctx_hash,
-        Span<const TokenId>{candidate.tokens.data(),
-                             static_cast<size_t>(candidate.block_index) * block_size_});
-    if (existing.blocks.size() != static_cast<size_t>(candidate.block_index)) {
-        return {AdmitResult::Status::InvalidBlock, std::nullopt};
-    }
-
-    auto slot =
-        manager_.createBlock(candidate.hash, candidate.block_index,
-                              static_cast<uint16_t>(block_size_), Tier::GpuSim);
-    if (!slot) {
-        return {AdmitResult::Status::CapacityExceeded, std::nullopt};
-    }
-
-    const auto [id, generation] = *slot;
-    (void)generation;
-
-    std::vector<BlockId> all_blocks = existing.blocks;
-    all_blocks.push_back(id);
-
-    prefix_index_.insert(
-        ctx_hash,
-        Span<const TokenId>{candidate.tokens.data(), candidate.tokens.size()},
-        Span<const BlockId>{all_blocks.data(), all_blocks.size()});
-
-    manager_.transitionState(id, BlockState::Admitting, BlockState::Ready);
-
-    return {AdmitResult::Status::Admitted, manager_.acquire(id)};
+    out.handle = std::move(result.handle);
+    return out;
 }
 
 FetchLocalResult LocalCache::getBlock(BlockId id, uint64_t generation) {
@@ -84,7 +94,7 @@ CacheSnapshot LocalCache::snapshot() const {
     const auto recs = manager_.store().records();
     uint32_t used = 0;
     uint32_t ready = 0;
-    for (size_t i = 0; i < recs.size(); ++i) {
+    for (std::size_t i = 0; i < recs.size(); ++i) {
         if (recs[i].generation > 0 && recs[i].state != BlockState::Free) {
             ++used;
         }

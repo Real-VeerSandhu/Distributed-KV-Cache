@@ -29,4 +29,19 @@ PrefixLookupResult PrefixLookupEngine::lookup(kvcache::CacheContextHash ctx_hash
     return result;
 }
 
+std::vector<kvcache::BlockId> PrefixLookupEngine::rawLookupBlocks(
+    kvcache::CacheContextHash ctx_hash, Span<const kvcache::TokenId> tokens) const {
+    return index_.lookup(ctx_hash, tokens).blocks;
+}
+
+void PrefixLookupEngine::insertFullBlocks(kvcache::CacheContextHash ctx_hash,
+                                           Span<const kvcache::TokenId> tokens,
+                                           Span<const kvcache::BlockId> block_ids) {
+    index_.insert(ctx_hash, tokens, block_ids);
+}
+
+void PrefixLookupEngine::removeBlock(kvcache::BlockId id) { index_.remove(id); }
+
+const PrefixIndex& PrefixLookupEngine::index() const noexcept { return index_; }
+
 }  // namespace kvcache::prefix

@@ -4,6 +4,7 @@
 
 #include "core/block_handle.h"
 #include "core/ids.h"
+#include "core/ids.h"
 #include "core/span.h"
 #include "prefix/prefix_index.h"
 
@@ -25,6 +26,16 @@ public:
     [[nodiscard]] PrefixLookupResult lookup(kvcache::CacheContextHash ctx_hash,
                                             Span<const kvcache::TokenId> tokens,
                                             uint32_t block_size) const;
+
+    [[nodiscard]] std::vector<kvcache::BlockId> rawLookupBlocks(
+        kvcache::CacheContextHash ctx_hash, Span<const kvcache::TokenId> tokens) const;
+
+    void insertFullBlocks(kvcache::CacheContextHash ctx_hash, Span<const kvcache::TokenId> tokens,
+                          Span<const kvcache::BlockId> block_ids);
+
+    void removeBlock(kvcache::BlockId id);
+
+    [[nodiscard]] const PrefixIndex& index() const noexcept;
 
 private:
     PrefixIndex& index_;

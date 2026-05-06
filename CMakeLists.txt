@@ -34,6 +34,7 @@ add_library(xxhash_headers INTERFACE)
 target_include_directories(xxhash_headers SYSTEM INTERFACE ${xxhash_SOURCE_DIR})
 
 add_subdirectory(src)
+add_subdirectory(apps)
 
 include(CTest)
 if(BUILD_TESTING)

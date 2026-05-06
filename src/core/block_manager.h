@@ -35,6 +35,7 @@ public:
     void freeBlock(BlockId id);
 
     [[nodiscard]] const BlockStore& store() const noexcept;
+    [[nodiscard]] uint32_t available() const noexcept;
 
 private:
     BlockPool pool_;

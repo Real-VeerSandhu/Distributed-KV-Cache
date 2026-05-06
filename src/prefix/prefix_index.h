@@ -28,6 +28,9 @@ public:
 
     void remove(kvcache::BlockId id);
 
+    [[nodiscard]] uint32_t blockChildCount(kvcache::BlockId id) const;
+    [[nodiscard]] uint32_t blockDescendantCount(kvcache::BlockId id) const;
+
 private:
     static constexpr uint32_t INVALID_NODE = std::numeric_limits<uint32_t>::max();
 

@@ -1,7 +1,9 @@
 #include "prefix/prefix_index.h"
 
 #include <algorithm>
+#include <queue>
 #include <stdexcept>
+#include <vector>
 
 namespace kvcache::prefix {
 
@@ -203,6 +205,68 @@ void PrefixIndex::pruneIfEmpty(uint32_t node_idx) {
         nodes_[parent_idx].children.erase(first);
         node_idx = parent_idx;
     }
+}
+
+uint32_t PrefixIndex::blockChildCount(kvcache::BlockId id) const {
+    auto it = block_node_index_.find(id);
+    if (it == block_node_index_.end()) {
+        return 0;
+    }
+    const uint32_t start_idx = it->second;
+
+    struct Work {
+        uint32_t node;
+        uint32_t remaining;
+    };
+    std::queue<Work> q;
+    for (const auto& [tok, child] : nodes_[start_idx].children) {
+        const auto edge_len = static_cast<uint32_t>(nodes_[child].edge_tokens.size());
+        if (edge_len <= block_size_) {
+            q.push({child, block_size_ - edge_len});
+        }
+    }
+
+    uint32_t count = 0;
+    while (!q.empty()) {
+        const auto [n, rem] = q.front();
+        q.pop();
+        if (rem == 0) {
+            if (nodes_[n].terminal_block.has_value()) {
+                ++count;
+            }
+        } else {
+            for (const auto& [tok, child] : nodes_[n].children) {
+                const auto edge_len = static_cast<uint32_t>(nodes_[child].edge_tokens.size());
+                if (edge_len <= rem) {
+                    q.push({child, rem - edge_len});
+                }
+            }
+        }
+    }
+    return count;
+}
+
+uint32_t PrefixIndex::blockDescendantCount(kvcache::BlockId id) const {
+    auto it = block_node_index_.find(id);
+    if (it == block_node_index_.end()) {
+        return 0;
+    }
+    uint32_t count = 0;
+    std::vector<uint32_t> stack;
+    for (const auto& [tok, child] : nodes_[it->second].children) {
+        stack.push_back(child);
+    }
+    while (!stack.empty()) {
+        const uint32_t n = stack.back();
+        stack.pop_back();
+        if (nodes_[n].terminal_block.has_value()) {
+            ++count;
+        }
+        for (const auto& [tok, child] : nodes_[n].children) {
+            stack.push_back(child);
+        }
+    }
+    return count;
 }
 
 }  // namespace kvcache::prefix
