@@ -150,10 +150,10 @@ TEST(LruEvictionPolicy, ChoosesSingleCandidate) {
 TEST(GpuFirstPlacementPolicy, ChoosesGpuSimWhenCapacityAvailable) {
     const auto reg = PolicyRegistry::fromConfig(makeDefaultPolicyConfig(), makeDefaultLatencyParams());
     const PlacementContext ctx{
-        .gpu_sim_used_bytes = 100,
-        .gpu_sim_capacity_bytes = 1000,
-        .host_used_bytes = 0,
-        .host_capacity_bytes = 10000,
+        .gpu_sim_used_blocks = 1,
+        .gpu_sim_capacity_blocks = 10,
+        .host_used_blocks = 0,
+        .host_capacity_blocks = 100,
         .timestamp_ns = 0,
     };
     EXPECT_EQ(reg.tier_placement->chooseTier(ctx, makeCandidateFeatures()), Tier::GpuSim);
@@ -162,10 +162,10 @@ TEST(GpuFirstPlacementPolicy, ChoosesGpuSimWhenCapacityAvailable) {
 TEST(GpuFirstPlacementPolicy, FallsBackToHostWhenGpuFull) {
     const auto reg = PolicyRegistry::fromConfig(makeDefaultPolicyConfig(), makeDefaultLatencyParams());
     const PlacementContext ctx{
-        .gpu_sim_used_bytes = 1000,
-        .gpu_sim_capacity_bytes = 1000,
-        .host_used_bytes = 0,
-        .host_capacity_bytes = 10000,
+        .gpu_sim_used_blocks = 10,
+        .gpu_sim_capacity_blocks = 10,
+        .host_used_blocks = 0,
+        .host_capacity_blocks = 100,
         .timestamp_ns = 0,
     };
     EXPECT_EQ(reg.tier_placement->chooseTier(ctx, makeCandidateFeatures()), Tier::Host);

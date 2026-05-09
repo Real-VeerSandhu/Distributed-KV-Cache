@@ -5,6 +5,7 @@
 
 #include "config/config.h"
 #include "policy/policies/always_admit.h"
+#include "policy/policies/bandwidth_latency.h"
 #include "policy/policies/constant_latency.h"
 #include "policy/policies/first_replica.h"
 #include "policy/policies/gpu_first_placement.h"
@@ -12,6 +13,7 @@
 #include "policy/policies/no_demotion.h"
 #include "policy/policies/no_prefetch.h"
 #include "policy/policies/no_promotion.h"
+#include "policy/policies/prefix_aware_eviction.h"
 #include "policy/policies/random_routing.h"
 
 namespace kvcache::policy {
@@ -25,6 +27,7 @@ std::unique_ptr<AdmissionPolicy> makeAdmission(const std::string& name) {
 
 std::unique_ptr<EvictionPolicy> makeEviction(const std::string& name) {
     if (name == "lru") return std::make_unique<LruEvictionPolicy>();
+    if (name == "prefix_aware") return std::make_unique<PrefixAwareEvictionPolicy>();
     throw std::runtime_error("policy_registry: unknown eviction policy: " + name);
 }
 
@@ -65,6 +68,9 @@ std::unique_ptr<LatencyModel> makeLatency(const std::string& name,
                                                       params.tier_access_ns,
                                                       params.migration_ns,
                                                       params.network_fetch_ns);
+    }
+    if (name == "bandwidth") {
+        return std::make_unique<BandwidthLatencyModel>();
     }
     throw std::runtime_error("policy_registry: unknown latency model: " + name);
 }

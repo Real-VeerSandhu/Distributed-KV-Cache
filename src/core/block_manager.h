@@ -34,6 +34,7 @@ public:
 
     void freeBlock(BlockId id);
 
+    [[nodiscard]] BlockStore& store() noexcept;
     [[nodiscard]] const BlockStore& store() const noexcept;
     [[nodiscard]] uint32_t available() const noexcept;
 

@@ -52,6 +52,7 @@ void BlockStore::initialize(BlockId id, uint64_t generation, ContentHash hash,
     rec.refcount.store(0, std::memory_order_relaxed);
     rec.last_access_ns = 0;
     rec.access_count = 0;
+    rec.payload = tier::PayloadRef{};
     rec.state = initial_state;
 }
 
@@ -61,6 +62,22 @@ void BlockStore::setState(BlockId id, BlockState state) {
         throw std::logic_error("BlockStore::setState: slot out of range");
     }
     records_[slot].state = state;
+}
+
+void BlockStore::setTier(BlockId id, Tier tier) {
+    const size_t slot = slotOf(id);
+    if (slot >= static_cast<size_t>(capacity_)) {
+        throw std::logic_error("BlockStore::setTier: slot out of range");
+    }
+    records_[slot].tier = tier;
+}
+
+void BlockStore::setPayload(BlockId id, tier::PayloadRef payload) {
+    const size_t slot = slotOf(id);
+    if (slot >= static_cast<size_t>(capacity_)) {
+        throw std::logic_error("BlockStore::setPayload: slot out of range");
+    }
+    records_[slot].payload = payload;
 }
 
 void BlockStore::markAccessed(BlockId id, uint64_t now_ns) {

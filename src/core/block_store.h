@@ -6,6 +6,7 @@
 
 #include "core/ids.h"
 #include "core/span.h"
+#include "tier/payload_store.h"
 #include "tier/tier.h"
 
 namespace kvcache {
@@ -22,6 +23,7 @@ struct BlockRecord {
     mutable std::atomic<uint32_t> refcount{0};
     uint64_t last_access_ns{0};
     uint64_t access_count{0};
+    tier::PayloadRef payload{};
     BlockState state{BlockState::Free};
 
     BlockRecord() noexcept = default;
@@ -44,6 +46,8 @@ public:
     void initialize(BlockId id, uint64_t generation, ContentHash hash, uint32_t block_index,
                     uint16_t token_count, Tier tier, BlockState initial_state);
     void setState(BlockId id, BlockState state);
+    void setTier(BlockId id, Tier tier);
+    void setPayload(BlockId id, tier::PayloadRef payload);
     void markAccessed(BlockId id, uint64_t now_ns);
 
     [[nodiscard]] BlockHandle createHandle(BlockId id);

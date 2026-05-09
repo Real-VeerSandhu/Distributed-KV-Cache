@@ -8,6 +8,9 @@ add_library(kvcache_core STATIC
     core/block_manager.cc
     core/local_cache.cc
     tier/tier.cc
+    tier/payload_store.cc
+    tier/tier_store.cc
+    tier/tier_manager.cc
     sim/event_sink.cc
     sim/decision_logger.cc
     config/config.cc
@@ -24,11 +27,14 @@ add_library(kvcache_core STATIC
     policy/policies/first_replica.cc
     policy/policies/no_prefetch.cc
     policy/policies/constant_latency.cc
+    policy/policies/bandwidth_latency.cc
     prefix/prefix_index.cc
     prefix/prefix_lookup_engine.cc
     controller/safe_candidate_finder.cc
     controller/eviction_controller.cc
     controller/admission_controller.cc
+    controller/promotion_controller.cc
+    controller/demotion_controller.cc
 )
 
 target_include_directories(kvcache_core

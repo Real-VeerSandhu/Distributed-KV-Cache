@@ -4,7 +4,7 @@ namespace kvcache::policy {
 
 Tier GpuFirstPlacementPolicy::chooseTier(const PlacementContext& context,
                                           const BlockCandidateFeatures& /*candidate*/) {
-    const bool gpu_has_space = context.gpu_sim_used_bytes < context.gpu_sim_capacity_bytes;
+    const bool gpu_has_space = context.gpu_sim_used_blocks < context.gpu_sim_capacity_blocks;
     return gpu_has_space ? Tier::GpuSim : Tier::Host;
 }
 

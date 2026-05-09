@@ -17,10 +17,15 @@
 #include "core/span.h"
 #include "policy/admission_policy.h"
 #include "policy/eviction_policy.h"
+#include "policy/tier_placement_policy.h"
 #include "prefix/prefix_index.h"
 #include "prefix/prefix_lookup_engine.h"
 #include "sim/decision_logger.h"
 #include "sim/event_sink.h"
+
+namespace kvcache::tier {
+class TierManager;
+}
 
 namespace kvcache {
 
@@ -53,6 +58,14 @@ public:
     LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock,
                policy::AdmissionPolicy& admission_policy,
                policy::EvictionPolicy& eviction_policy, sim::EventSink& events,
+               sim::DecisionLogger& decisions);
+
+    // Phase 3 constructor: adds tier placement policy and tier manager.
+    LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock,
+               policy::AdmissionPolicy& admission_policy,
+               policy::EvictionPolicy& eviction_policy,
+               policy::TierPlacementPolicy& placement_policy,
+               tier::TierManager& tier_manager, sim::EventSink& events,
                sim::DecisionLogger& decisions);
 
     [[nodiscard]] LocalLookupOutcome lookupPrefix(const CacheKeyContext& ctx,

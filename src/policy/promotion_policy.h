@@ -7,8 +7,8 @@ namespace kvcache::policy {
 enum class PromotionDecision { Promote, Stay };
 
 struct PromotionContext {
-    uint64_t gpu_sim_used_bytes;
-    uint64_t gpu_sim_capacity_bytes;
+    uint32_t gpu_sim_used_blocks;
+    uint32_t gpu_sim_capacity_blocks;
     uint64_t timestamp_ns;
 };
 

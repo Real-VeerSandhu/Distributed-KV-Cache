@@ -2,6 +2,7 @@
 
 #include "policy/policies/always_admit.h"
 #include "policy/policies/no_eviction.h"
+#include "tier/tier_manager.h"
 
 namespace kvcache {
 
@@ -36,6 +37,24 @@ LocalCache::LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock,
                            decisions),
       admission_controller_(admission_policy, eviction_controller_, manager_, lookup_engine_,
                             block_size_, events, decisions) {}
+
+LocalCache::LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock,
+                       policy::AdmissionPolicy& admission_policy,
+                       policy::EvictionPolicy& eviction_policy,
+                       policy::TierPlacementPolicy& placement_policy,
+                       tier::TierManager& tier_manager, sim::EventSink& events,
+                       sim::DecisionLogger& decisions)
+    : block_size_(block_size),
+      clock_(clock),
+      manager_(capacity, clock),
+      prefix_index_(block_size),
+      lookup_engine_(prefix_index_, manager_),
+      candidate_finder_(manager_.store()),
+      eviction_controller_(eviction_policy, manager_, lookup_engine_, candidate_finder_,
+                           tier_manager, events, decisions),
+      admission_controller_(admission_policy, placement_policy, tier_manager,
+                            eviction_controller_, manager_, lookup_engine_, block_size_, events,
+                            decisions) {}
 
 LocalLookupOutcome LocalCache::lookupPrefix(const CacheKeyContext& ctx,
                                              Span<const TokenId> tokens) {

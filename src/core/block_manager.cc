@@ -103,6 +103,7 @@ void BlockManager::freeBlock(BlockId id) {
     transitionState(id, BlockState::Evicting, BlockState::Free);
 }
 
+BlockStore& BlockManager::store() noexcept { return store_; }
 const BlockStore& BlockManager::store() const noexcept { return store_; }
 
 uint32_t BlockManager::available() const noexcept { return pool_.available(); }
