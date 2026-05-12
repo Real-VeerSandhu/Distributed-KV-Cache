@@ -117,4 +117,8 @@ const TierStore& TierManager::tierStore(Tier tier) const {
     return it->second;
 }
 
+Span<const std::byte> TierManager::getPayload(tier::PayloadRef ref) const {
+    return payload_store_.get(ref);
+}
+
 }  // namespace kvcache::tier

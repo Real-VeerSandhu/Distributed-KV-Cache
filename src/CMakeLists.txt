@@ -24,6 +24,7 @@ add_library(kvcache_core STATIC
     policy/policies/no_promotion.cc
     policy/policies/no_demotion.cc
     policy/policies/random_routing.cc
+    policy/policies/hash_routing.cc
     policy/policies/first_replica.cc
     policy/policies/no_prefetch.cc
     policy/policies/constant_latency.cc
@@ -35,6 +36,20 @@ add_library(kvcache_core STATIC
     controller/admission_controller.cc
     controller/promotion_controller.cc
     controller/demotion_controller.cc
+    coordinator/global_index.cc
+    coordinator/worker_directory.cc
+    coordinator/stale_reference_cleaner.cc
+    coordinator/coordinator_service.cc
+    coordinator/inproc_coordinator_client.cc
+    pipeline/missing_block_planner.cc
+    pipeline/remote_block_fetcher.cc
+    pipeline/lookup_stage.cc
+    pipeline/remote_resolution_stage.cc
+    pipeline/admission_stage.cc
+    pipeline/result_assembler.cc
+    pipeline/request_pipeline.cc
+    worker/worker_service.cc
+    transport/inproc_transport.cc
 )
 
 target_include_directories(kvcache_core

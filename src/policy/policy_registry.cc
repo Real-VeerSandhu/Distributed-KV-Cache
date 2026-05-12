@@ -14,6 +14,7 @@
 #include "policy/policies/no_prefetch.h"
 #include "policy/policies/no_promotion.h"
 #include "policy/policies/prefix_aware_eviction.h"
+#include "policy/policies/hash_routing.h"
 #include "policy/policies/random_routing.h"
 
 namespace kvcache::policy {
@@ -48,6 +49,7 @@ std::unique_ptr<DemotionPolicy> makeDemotion(const std::string& name) {
 
 std::unique_ptr<RoutingPolicy> makeRouting(const std::string& name) {
     if (name == "random") return std::make_unique<RandomRoutingPolicy>();
+    if (name == "hash_first_block") return std::make_unique<HashFirstBlockRoutingPolicy>();
     throw std::runtime_error("policy_registry: unknown routing policy: " + name);
 }
 

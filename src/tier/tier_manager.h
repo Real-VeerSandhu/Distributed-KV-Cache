@@ -43,6 +43,7 @@ public:
     [[nodiscard]] TierStats stats(Tier tier) const;
     [[nodiscard]] bool hasCapacity(Tier tier) const noexcept;
     [[nodiscard]] const TierStore& tierStore(Tier tier) const;
+    [[nodiscard]] Span<const std::byte> getPayload(tier::PayloadRef ref) const;
 
 private:
     std::unordered_map<Tier, TierStore> tiers_;

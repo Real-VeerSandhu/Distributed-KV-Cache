@@ -46,6 +46,7 @@ LocalCache::LocalCache(uint32_t capacity, uint32_t block_size, Clock& clock,
                        sim::DecisionLogger& decisions)
     : block_size_(block_size),
       clock_(clock),
+      tier_manager_(&tier_manager),
       manager_(capacity, clock),
       prefix_index_(block_size),
       lookup_engine_(prefix_index_, manager_),
@@ -107,6 +108,23 @@ AdmitResult LocalCache::admitBlock(const BlockCandidate& candidate) {
 
 FetchLocalResult LocalCache::getBlock(BlockId id, uint64_t generation) {
     return manager_.fetchLocal(id, generation);
+}
+
+ServeBlockResult LocalCache::serveBlockFetch(BlockId id, uint64_t generation) {
+    auto result = manager_.fetchLocal(id, generation);
+    if (result.status == FetchLocalResult::Status::NotFound) {
+        return {ServeBlockResult::Status::NotFound, {}, {}, 0};
+    }
+    if (result.status == FetchLocalResult::Status::StaleGeneration) {
+        return {ServeBlockResult::Status::StaleGeneration, {}, {}, 0};
+    }
+    const BlockRecord& rec = result.handle->metadata();
+    std::vector<std::byte> payload_bytes;
+    if (tier_manager_ != nullptr && rec.payload.valid()) {
+        const auto span = tier_manager_->getPayload(rec.payload);
+        payload_bytes.assign(span.begin(), span.end());
+    }
+    return {ServeBlockResult::Status::Ok, std::move(payload_bytes), rec.hash, rec.generation};
 }
 
 CacheSnapshot LocalCache::snapshot() const {

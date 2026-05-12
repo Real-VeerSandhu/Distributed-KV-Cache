@@ -49,6 +49,14 @@ struct CacheSnapshot {
     uint32_t ready_blocks{0};
 };
 
+struct ServeBlockResult {
+    enum class Status { Ok, NotFound, StaleGeneration };
+    Status status{Status::NotFound};
+    std::vector<std::byte> payload;  // empty in metadata_only mode
+    ContentHash hash{};
+    uint64_t generation{0};
+};
+
 class LocalCache {
 public:
     // Phase 1-compatible constructor: uses AlwaysAdmit, NoEviction, null sinks.
@@ -75,6 +83,9 @@ public:
 
     [[nodiscard]] FetchLocalResult getBlock(BlockId id, uint64_t generation);
 
+    // Fetches a block and serializes its payload for remote delivery.
+    [[nodiscard]] ServeBlockResult serveBlockFetch(BlockId id, uint64_t generation);
+
     [[nodiscard]] CacheSnapshot snapshot() const;
 
 private:
@@ -86,6 +97,7 @@ private:
 
     uint32_t block_size_;
     Clock& clock_;
+    tier::TierManager* tier_manager_{nullptr};  // nullable; set by Phase 3 constructor
     BlockManager manager_;
     prefix::PrefixIndex prefix_index_;
     prefix::PrefixLookupEngine lookup_engine_;
